@@ -19,9 +19,9 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest]
-        ruby: ['2.7', '3.1']
+        ruby: ['3.3', '3.4']
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - uses: ruby/setup-ruby@v1
       with:
         ruby-version: ${{ matrix.ruby }}
@@ -29,13 +29,13 @@ jobs:
     - name: MacOs Dependencies
       run: |
         brew tap ethereum/ethereum
-        brew install --verbose pkg-config automake autogen ethereum solidity
+        brew install --verbose pkg-config automake autogen geth solidity
       if: startsWith(matrix.os, 'macOS')
     - name: Ubuntu Dependencies
       run: |
         sudo add-apt-repository -y ppa:ethereum/ethereum
         sudo apt-get update
-        sudo apt-get install ethereum solc
+        sudo apt-get install geth solc
       if: startsWith(matrix.os, 'Ubuntu')
     - name: Run Geth
       run: |
@@ -49,4 +49,9 @@ jobs:
       run: |
         bundle exec rspec
       env:
-        COVERAGE: true
+        DRPC_TOKEN: ${{ secrets.DRPC_TOKEN }}
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v5
+      with:
+        fail_ci_if_error: true
+        token: ${{ secrets.CODECOV_TOKEN }}

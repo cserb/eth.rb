@@ -1,4 +1,4 @@
-# Copyright (c) 2016-2022 The Ruby-Eth Contributors
+# Copyright (c) 2016-2025 The Ruby-Eth Contributors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ module Eth
     attr_accessor :path
 
     # Constructor for the IPC Client. Should not be used; use
-    # {Client.create} intead.
+    # {Client.create} instead.
     #
     # @param path [String] an URI pointing to an IPC RPC-API.
     def initialize(path)
@@ -36,7 +36,7 @@ module Eth
     #
     # @param payload [Hash] the RPC request parameters.
     # @return [String] a JSON-encoded response.
-    def send(payload)
+    def send_request(payload)
       socket = UNIXSocket.new(@path)
       socket.puts(payload)
       read = socket.recvmsg(nil)[0]

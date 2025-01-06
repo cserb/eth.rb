@@ -1,4 +1,4 @@
-# Copyright (c) 2016-2022 The Ruby-Eth Contributors
+# Copyright (c) 2016-2025 The Ruby-Eth Contributors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ module Eth
 
     # Returns complete types with subtypes, e.g., `uint256`.
     def type
-      @type.base_type + @type.sub_type
+      @type.base_type + @type.sub_type + @type.dimensions.map { |dimension| "[#{dimension > 0 ? dimension : ""}]" }.join("")
     end
   end
 end

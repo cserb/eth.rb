@@ -1,4 +1,4 @@
-# Copyright (c) 2016-2022 The Ruby-Eth Contributors
+# Copyright (c) 2016-2025 The Ruby-Eth Contributors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -175,17 +175,22 @@ module Eth
           # allows us to force-setting a signature if the transaction is signed already
           _set_signature(recovery_id, r, s)
         else
-          raise_error DecoderError, "Cannot decode EIP-2930 payload!"
+          raise DecoderError, "Cannot decode EIP-2930 payload!"
         end
 
         # last but not least, set the type.
         @type = TYPE_2930
 
-        # recover sender address
-        v = Chain.to_v recovery_id, chain_id
-        public_key = Signature.recover(unsigned_hash, "#{r}#{s}#{v.to_s(16)}", chain_id)
-        address = Util.public_key_to_address(public_key).to_s
-        @sender = Tx.sanitize_address address
+        unless recovery_id.nil?
+          # recover sender address
+          v = Chain.to_v recovery_id, chain_id
+          public_key = Signature.recover(unsigned_hash, "#{r.rjust(64, "0")}#{s.rjust(64, "0")}#{v.to_s(16)}", chain_id)
+          address = Util.public_key_to_address(public_key).to_s
+          @sender = Tx.sanitize_address address
+        else
+          # keep the 'from' field blank
+          @sender = Tx.sanitize_address nil
+        end
       end
 
       # Creates an unsigned copy of a transaction payload.
@@ -225,7 +230,7 @@ module Eth
       # @raise [Signature::SignatureError] if transaction is already signed.
       # @raise [Signature::SignatureError] if sender address does not match signing key.
       def sign(key)
-        if Tx.is_signed? self
+        if Tx.signed? self
           raise Signature::SignatureError, "Transaction is already signed!"
         end
 
@@ -252,7 +257,7 @@ module Eth
       # @return [String] a raw, RLP-encoded EIP-2930 type transaction object.
       # @raise [Signature::SignatureError] if the transaction is not yet signed.
       def encoded
-        unless Tx.is_signed? self
+        unless Tx.signed? self
           raise Signature::SignatureError, "Transaction is not signed!"
         end
         tx_data = []

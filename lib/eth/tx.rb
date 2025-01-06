@@ -1,4 +1,4 @@
-# Copyright (c) 2016-2022 The Ruby-Eth Contributors
+# Copyright (c) 2016-2025 The Ruby-Eth Contributors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -39,14 +39,20 @@ module Eth
     # The minimum transaction gas limit required for a value transfer.
     DEFAULT_GAS_LIMIT = 21_000.freeze
 
-    # The "default" transaction gas price of 20 GWei. Do not use.
-    DEFAULT_GAS_PRICE = (20 * Unit::GWEI).freeze
+    # The "default" transaction priority fee of 1.01 GWei. Do not use.
+    DEFAULT_PRIORITY_FEE = (1.01 * Unit::GWEI).freeze
+
+    # The "default" transaction gas price of 42.69 GWei. Do not use.
+    DEFAULT_GAS_PRICE = (42.69 * Unit::GWEI).freeze
 
     # The calldata gas cost of a non-zero byte as per EIP-2028.
     COST_NON_ZERO_BYTE = 16.freeze
 
     # The calldata gas cost of a zero byte.
     COST_ZERO_BYTE = 4.freeze
+
+    # The initcode gas cost for each word (32 bytes).
+    COST_INITCODE_WORD = 2.freeze
 
     # The access list gas cost of a storage key as per EIP-2930.
     COST_STORAGE_KEY = 1_900.freeze
@@ -55,7 +61,7 @@ module Eth
     COST_ADDRESS = 2_400.freeze
 
     # The maximum transaction gas limit is bound by the block gas limit.
-    BLOCK_GAS_LIMIT = 25_000_000.freeze
+    BLOCK_GAS_LIMIT = 30_000_000.freeze
 
     # The legacy transaction type is 0.
     TYPE_LEGACY = 0x00.freeze
@@ -153,7 +159,7 @@ module Eth
     end
 
     # Estimates intrinsic gas for provided call data (EIP-2028) and
-    # access lists (EIP-2930).
+    # access lists (EIP-2930). Respects initcode word cost (EIP-3860).
     #
     # @param data [String] the call data.
     # @param list [Array] the access list.
@@ -161,7 +167,7 @@ module Eth
     def estimate_intrinsic_gas(data = "", list = [])
       gas = DEFAULT_GAS_LIMIT
       unless data.nil? or data.empty?
-        data = Util.hex_to_bin data if Util.is_hex? data
+        data = Util.hex_to_bin data if Util.hex? data
 
         # count zero bytes
         zero = data.count ZERO_BYTE
@@ -170,6 +176,10 @@ module Eth
         # count non-zero bytes
         none = data.size - zero
         gas += none * COST_NON_ZERO_BYTE
+
+        # count "words" as per EIP-3860
+        word_count = (data.length.to_f / 32.0).ceil
+        gas += word_count * COST_INITCODE_WORD
       end
       unless list.nil? or list.empty?
         list.each do |entry|
@@ -184,7 +194,7 @@ module Eth
           end
         end
       end
-      return gas
+      return gas.to_i
     end
 
     # Validates the common transaction fields such as nonce, gas limit,
@@ -200,7 +210,9 @@ module Eth
       if fields[:nonce].nil? or fields[:nonce] < 0
         raise ParameterError, "Invalid signer nonce #{fields[:nonce]}!"
       end
-      if fields[:gas_limit].nil? or fields[:gas_limit] < DEFAULT_GAS_LIMIT or fields[:gas_limit] > BLOCK_GAS_LIMIT
+      if fields[:gas_limit].nil? or
+         fields[:gas_limit] < DEFAULT_GAS_LIMIT or
+         (fields[:gas_limit] > BLOCK_GAS_LIMIT and fields[:chain_id] == Chain::ETHEREUM)
         raise ParameterError, "Invalid gas limit #{fields[:gas_limit]}!"
       end
       unless fields[:value] >= 0
@@ -285,7 +297,7 @@ module Eth
       data = "" if data.nil?
 
       # ensure payload to be binary if it's hex, otherwise we'll treat it raw
-      data = Util.hex_to_bin data if Util.is_hex? data
+      data = Util.hex_to_bin data if Util.hex? data
       return data
     end
 
@@ -302,7 +314,7 @@ module Eth
 
           # recursively check the entire array
           list[index] = sanitize_list value
-        elsif Util.is_hex? value
+        elsif Util.hex? value
 
           # only modify if we find a hex value
           list[index] = Util.hex_to_bin value
@@ -314,7 +326,7 @@ module Eth
     # Allows to check wether a transaction is signed already.
     #
     # @return [Bool] true if transaction is already signed.
-    def is_signed?(tx)
+    def signed?(tx)
       !tx.signature_r.nil? and tx.signature_r != 0 and
       !tx.signature_s.nil? and tx.signature_s != 0
     end

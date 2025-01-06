@@ -1,4 +1,4 @@
-# Copyright (c) 2016-2022 The Ruby-Eth Contributors
+# Copyright (c) 2016-2025 The Ruby-Eth Contributors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ module Eth
     # @param inputs [Array<Eth::Contract::FunctionInput>] function input class list.
     # @return [String] function string.
     def self.calc_signature(name, inputs)
-      "#{name}(#{inputs.collect { |x| x.raw_type }.join(",")})"
+      "#{name}(#{inputs.map { |x| x.parsed_type.to_s }.join(",")})"
     end
 
     # Encodes a function signature.

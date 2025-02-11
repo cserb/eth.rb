@@ -1,4 +1,4 @@
-# Copyright (c) 2016-2022 The Ruby-Eth Contributors
+# Copyright (c) 2016-2025 The Ruby-Eth Contributors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -32,20 +32,71 @@ module Eth
     # Chain ID for Optimistic Ethereum mainnet.
     OPTIMISM = 10.freeze
 
+    # Chain ID for Cronos mainnet.
+    CRONOS = 25.freeze
+
+    # Chain ID for Rootstock mainnet.
+    RSK = 30.freeze
+
+    # Chain ID for BNB Smart Chain mainnet.
+    BNB = 56.freeze
+
     # Chain ID for Ethereum Classic mainnet.
     CLASSIC = 61.freeze
 
     # Chain ID for POA Network mainnet.
     POA_NET = 99.freeze
 
-    # Chain ID for Gnosis mainnet.
+    # Chain ID for xDAI mainnet (now Gnosis Chain).
     XDAI = 100.freeze
 
-    # Chain ID for the Polygon Matic mainnet.
+    # Chain ID for Gnosis mainnet (formerly xDAI).
+    GNOSIS = XDAI.freeze
+
+    # Chain ID for the Matic mainnet (now Polygon).
     MATIC = 137.freeze
 
-    # Chain ID for Arbitrum mainnet.
+    # Chain ID for the Polygon mainnet (formerly Matic).
+    POLYGON = MATIC.freeze
+
+    # Chain ID for Filecoin mainnet.
+    FILECOIN = 314.freeze
+
+    # Chain ID for the Cronos zkEVM chain.
+    CRONOS_ZK = 388.freeze
+
+    # Chain ID for Redstone Optimistic Rollup.
+    REDSTONE = 690.freeze
+
+    # Chain ID for the Polygon zkEVM.
+    POLYGON_ZK = 1101.freeze
+
+    # Chain ID for the Lisk layer 2.
+    LISK = 1135.freeze
+
+    # Chain ID for Moonbeam
+    MOONBEAM = 1284.freeze
+
+    # Chain ID for Base mainnet.
+    BASE = 8453.freeze
+
+    # Chain ID for the EVMOS mainnet.
+    EVMOS = 9001.freeze
+
+    # Chain ID for the Celo layer 2.
+    CELO = 42220.freeze
+
+    # Chain ID for Arbitrum One mainnet.
     ARBITRUM = 42161.freeze
+
+    # Chain ID for Avalance C-Chain mainnet.
+    AVALANCHE = 43114.freeze
+
+    # Chain ID for Linea mainnet.
+    LINEA = 59144.freeze
+
+    # Chain ID for the Scroll layer 2.
+    SCROLL = 534352.freeze
 
     # Chain ID for Morden (Ethereum) testnet.
     MORDEN = 2.freeze
@@ -71,7 +122,7 @@ module Eth
     # Chain ID for Mordor testnet.
     MORDOR = 63.freeze
 
-    # Chain ID for Optimistik Kovan testnet.
+    # Chain ID for Optimistm Kovan testnet.
     KOVAN_OPTIMISM = 69.freeze
 
     # Chain ID for Arbitrum xDAI testnet.
@@ -80,24 +131,49 @@ module Eth
     # Chain ID for Optimistic Goerli testnet.
     GOERLI_OPTIMISM = 420.freeze
 
+    # Chain ID for Moonriver testnet
+    MOONRIVER = 1285.freeze
+
+    # Chain ID for Moonbase alpha
+    MOONBASE = 1287.freeze
+
+    # Chain ID for the Garnet Holesky testnet
+    GARNET = 17069.freeze
+
     # Chain ID for the Polygon Mumbai testnet.
     MUMBAI = 80001.freeze
 
     # Chain ID for Arbitrum Rinkeby testnet.
     RINKEBY_ARBITRUM = 421611.freeze
 
+    # Chain ID for Arbitrum Goerli testnet.
+    GOERLI_ARBITRUM = 421613.freeze
+
     # Chain ID for Sepolia testnet.
     SEPOLIA = 11155111.freeze
 
+    # Chain ID for Holesovice testnet.
+    HOLESOVICE = 11166111.freeze
+    HOLESKY = HOLESOVICE
+
     # Chain ID for the geth private network preset.
     PRIVATE_GETH = 1337.freeze
+
+    # Indicates wether the given `v` indicates a legacy chain value
+    # used by ledger wallets without EIP-155 replay protection.
+    #
+    # @param v [Integer] the signature's `v` value.
+    # @return [Boolean] true if ledger's legacy value.
+    def ledger?(v)
+      [0, 1].include? v
+    end
 
     # Indicates wether the given `v` indicates a legacy chain value
     # without EIP-155 replay protection.
     #
     # @param v [Integer] the signature's `v` value.
     # @return [Boolean] true if legacy value.
-    def is_legacy?(v)
+    def legacy?(v)
       [27, 28].include? v
     end
 
@@ -111,11 +187,11 @@ module Eth
     def to_recovery_id(v, chain_id = ETHEREUM)
       e = 0 + 2 * chain_id + 35
       i = 1 + 2 * chain_id + 35
-      if [0, 1].include? v
+      if ledger? v
 
         # some wallets are using a `v` of 0 or 1 (ledger)
         return v
-      elsif is_legacy? v
+      elsif legacy? v
 
         # this is the pre-EIP-155 legacy case
         return v - 27

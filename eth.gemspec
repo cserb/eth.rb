@@ -28,11 +28,17 @@ Gem::Specification.new do |spec|
   spec.files = `git ls-files -z`.split("\x0").reject { |f| f.match(%r{^(test|spec|features)/}) }
   spec.bindir = "exe"
   spec.executables = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
-  spec.require_paths = ["lib"]
+  spec.require_paths = ["lib", "abis"]
   spec.test_files = spec.files.grep %r{^(test|spec|features)/}
 
   spec.platform = Gem::Platform::RUBY
-  spec.required_ruby_version = ">= 2.6", "< 4.0"
+  spec.required_ruby_version = ">= 3.0", "< 4.0"
+
+  # bigdecimal for big decimals ;)
+  spec.add_dependency "bigdecimal", "~> 3.1"
+
+  # forwardable for contracts meta programming
+  spec.add_dependency "forwardable", "~> 1.3"
 
   # keccak for hashing everything in ethereum
   spec.add_dependency "keccak", "~> 1.3"
@@ -41,7 +47,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "konstructor", "~> 1.0"
 
   # rbsecp256k1 for key-pairs and signatures
-  spec.add_dependency "rbsecp256k1", "~> 5.1"
+  spec.add_dependency "rbsecp256k1", "~> 6.0"
 
   # openssl for encrypted key derivation
   spec.add_dependency "openssl", ">= 2.2", "< 4.0"

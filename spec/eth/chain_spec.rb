@@ -8,9 +8,27 @@ describe Chain do
       expect(Chain::EXPANSE).to eq 2
       expect(Chain::OPTIMISM).to eq 10
       expect(Chain::CLASSIC).to eq 61
+      expect(Chain::CRONOS).to eq 25
+      expect(Chain::RSK).to eq 30
+      expect(Chain::BNB).to eq 56
       expect(Chain::POA_NET).to eq 99
       expect(Chain::XDAI).to eq 100
+      expect(Chain::GNOSIS).to eq 100
+      expect(Chain::MATIC).to eq 137
+      expect(Chain::POLYGON).to eq 137
+      expect(Chain::FILECOIN).to eq 314
+      expect(Chain::CRONOS_ZK).to eq 388
+      expect(Chain::REDSTONE).to eq 690
+      expect(Chain::POLYGON_ZK).to eq 1101
+      expect(Chain::LISK).to eq 1135
+      expect(Chain::MOONBEAM).to eq 1284
+      expect(Chain::BASE).to eq 8453
+      expect(Chain::EVMOS).to eq 9001
+      expect(Chain::CELO).to eq 42220
       expect(Chain::ARBITRUM).to eq 42161
+      expect(Chain::AVALANCHE).to eq 43114
+      expect(Chain::LINEA).to eq 59144
+      expect(Chain::SCROLL).to eq 534352
 
       # Chain IDs for selected testnets
       expect(Chain::MORDEN).to eq 2
@@ -24,22 +42,40 @@ describe Chain do
       expect(Chain::KOVAN_OPTIMISM).to eq 69
       expect(Chain::XDAI_ARBITRUM).to eq 200
       expect(Chain::GOERLI_OPTIMISM).to eq 420
+      expect(Chain::MOONRIVER).to eq 1285
+      expect(Chain::MOONBASE).to eq 1287
+      expect(Chain::GARNET).to eq 17069
+      expect(Chain::MUMBAI).to eq 80001
       expect(Chain::RINKEBY_ARBITRUM).to eq 421611
+      expect(Chain::GOERLI_ARBITRUM).to eq 421613
       expect(Chain::SEPOLIA).to eq 11155111
+      expect(Chain::HOLESOVICE).to eq 11166111
+      expect(Chain::HOLESKY).to eq 11166111
 
       # Chain IDs for selected private networks
       expect(Chain::PRIVATE_GETH).to eq 1337
     end
   end
 
-  describe ".is_legacy" do
+  describe ".ledger" do
+    it "can detect ledger values for v" do
+      expect(Chain.ledger? 0).to be_truthy
+      expect(Chain.ledger? 1).to be_truthy
+      expect(Chain.ledger? 27).not_to be_truthy
+      expect(Chain.ledger? 28).not_to be_truthy
+      expect(Chain.ledger? 37).not_to be_truthy
+      expect(Chain.ledger? 38).not_to be_truthy
+    end
+  end
+
+  describe ".legacy" do
     it "can detect legacy values for v" do
-      expect(Chain.is_legacy? 0).not_to be_truthy
-      expect(Chain.is_legacy? 1).not_to be_truthy
-      expect(Chain.is_legacy? 27).to be_truthy
-      expect(Chain.is_legacy? 28).to be_truthy
-      expect(Chain.is_legacy? 37).not_to be_truthy
-      expect(Chain.is_legacy? 38).not_to be_truthy
+      expect(Chain.legacy? 0).not_to be_truthy
+      expect(Chain.legacy? 1).not_to be_truthy
+      expect(Chain.legacy? 27).to be_truthy
+      expect(Chain.legacy? 28).to be_truthy
+      expect(Chain.legacy? 37).not_to be_truthy
+      expect(Chain.legacy? 38).not_to be_truthy
     end
   end
 

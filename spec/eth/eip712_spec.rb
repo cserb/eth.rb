@@ -35,7 +35,7 @@ describe Eip712 do
       :name => "Ether Mail",
       :version => "1",
       :chainId => Chain::ETHEREUM,
-      :verifyingContract => Address.new("0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC").checksummed,
+      :verifyingContract => Address.new("0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC"),
     }
   }
 
@@ -44,11 +44,11 @@ describe Eip712 do
     {
       :from => {
         :name => "Cow",
-        :wallet => Address.new("0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826").checksummed,
+        :wallet => Address.new("0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826"),
       },
       :to => {
         :name => "Bob",
-        :wallet => Address.new("0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB").checksummed,
+        :wallet => Address.new("0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB"),
       },
       :contents => "Hello, Bob!",
     }
@@ -125,6 +125,118 @@ describe Eip712 do
   describe ".hash" do
     it "can hash the eip-712 typed data" do
       expect(Eip712.hash typed_data).to eq Util.hex_to_bin "0xbe609aee343fb3c4b28e1df9e632fca64fcfaede20f02e86244efddf30957bd2"
+    end
+  end
+
+  context "eip 712 arrays" do
+    subject(:domain) {
+      [
+        { name: "name", type: "string" },
+        { name: "version", type: "string" },
+        { name: "chainId", type: "uint256" },
+        { name: "verifyingContract", type: "address" },
+        { name: "salt", type: "bytes32" },
+      ]
+    }
+
+    subject(:sell_orders) {
+      [
+        { name: "id", type: "uint256[]" },
+        { name: "tokenId", type: "uint256[]" },
+        { name: "price", type: "uint256[]" },
+        { name: "proto", type: "uint256[]" },
+        { name: "purity", type: "uint256[]" },
+        { name: "seller", type: "address" },
+      ]
+    }
+
+    subject(:card_exchange_contract) { Address.new("0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC") }
+
+    subject(:domain_data) {
+      {
+        name: "app",
+        version: "1",
+        chainId: 3,
+        verifyingContract: card_exchange_contract,
+        salt: "0xa222082684812afae4e093416fff16bc218b569abe4db590b6a058e1f2c1cd3e",
+      }
+    }
+
+    subject(:address) { Address.new "0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826" }
+
+    subject(:message) {
+      {
+        id: [1],
+        tokenId: [1],
+        price: [1],
+        proto: [1],
+        purity: [1],
+        seller: address,
+      }
+    }
+
+    subject(:data) {
+      {
+        :types => {
+          :EIP712Domain => domain,
+          :SellOrders => sell_orders,
+        },
+        :primaryType => "SellOrders",
+        :domain => domain_data,
+        :message => message,
+      }
+    }
+
+    it "encodes arrays in an eip 712 domain" do
+      expect(Eip712.encode_type "EIP712Domain", data[:types]).to eq "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract,bytes32 salt)"
+      expect(Eip712.encode_type "SellOrders", data[:types]).to eq "SellOrders(uint256[] id,uint256[] tokenId,uint256[] price,uint256[] proto,uint256[] purity,address seller)"
+
+      expect(Util.bin_to_hex(Eip712.encode_data("EIP712Domain", domain_data, data[:types]))).to eq "d87cd6ef79d4e2b95e15ce8abf732db51ec771f1ca2edccf22a46c729ac56472d6f028ca0e8edb4a8c9757ca4fdccab25fa1e0317da1188108f7d2dee14902fbc89efdaa54c0f20c7adf612882df0950f5a951637e0307cdcb4c672f298b8bc60000000000000000000000000000000000000000000000000000000000000003000000000000000000000000cccccccccccccccccccccccccccccccccccccccca222082684812afae4e093416fff16bc218b569abe4db590b6a058e1f2c1cd3e"
+      pending("https://github.com/q9f/eth.rb/issues/127")
+      expect(Util.bin_to_hex(Eip712.encode_data("SellOrders", message, data[:types]))).to eq "58682cd513b67511a4ef89156104cf2bc7835c7289308bb112fdafe49897324200000000000000000000000000000000000000000000000000000000000000e00000000000000000000000000000000000000000000000000000000000000120000000000000000000000000000000000000000000000000000000000000016000000000000000000000000000000000000000000000000000000000000001a000000000000000000000000000000000000000000000000000000000000001e0000000000000000000000000cd2a3d9f938e13cd947ec05abc7fe734df8dd8260000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000001"
+    end
+  end
+
+  context "end to end" do
+    it "can hash the correct data type" do
+      key = Key.new(priv: "0x8e589ba6280400cfa426229684f7c2ac9ebf132f7ad658a82ed57553a0a9dee8")
+      data = "0xa2d6eae3"
+      domain = {
+        name: "Complex Data",
+        version: "1",
+        chainId: 421613,
+        verifyingContract: "0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC",
+      }
+
+      type_bytes = [{ name: "data", type: "bytes" }]
+      data_bytes = {
+        types: {
+          EIP712Domain: eip712_domain,
+          Data: type_bytes,
+        },
+        primaryType: "Data",
+        domain: domain,
+        message: {
+          data: data,
+        },
+      }
+      sig_bytes = "ddefbbe703f59949a87ece451321924bb9297100dda63e1f39559b72db3ec9e83dae2056c25b52ddb8bd53ab536e84d2e4f70d98219ed14e46b021a59aefb4eb1c"
+      expect(key.sign_typed_data data_bytes).to eq sig_bytes
+
+      type_string = [{ name: "data", type: "string" }]
+      data_string = {
+        types: {
+          EIP712Domain: eip712_domain,
+          Data: type_string,
+        },
+        primaryType: "Data",
+        domain: domain,
+        message: {
+          data: data,
+        },
+      }
+      sig_string = "8255c17ce6be5fb6ee3430784a52a5163c63fc87e2dcae32251d9c49ba849fad7067454b0d7e694698c02e552fd7af283dcaadc754d58ecba978856de8742e361b"
+      expect(key.sign_typed_data data_string).to eq sig_string
     end
   end
 end

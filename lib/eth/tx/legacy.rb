@@ -1,4 +1,4 @@
-# Copyright (c) 2016-2022 The Ruby-Eth Contributors
+# Copyright (c) 2016-2025 The Ruby-Eth Contributors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -154,13 +154,11 @@ module Eth
         _set_signature(v, r, s)
 
         unless chain_id.nil?
-
           # recover sender address
-          public_key = Signature.recover(unsigned_hash, "#{r}#{s}#{v}", chain_id)
+          public_key = Signature.recover(unsigned_hash, "#{r.rjust(64, "0")}#{s.rjust(64, "0")}#{v}", chain_id)
           address = Util.public_key_to_address(public_key).to_s
           @sender = Tx.sanitize_address address
         else
-
           # keep the 'from' field blank
           @sender = Tx.sanitize_address nil
         end
@@ -205,7 +203,7 @@ module Eth
       # @raise [Signature::SignatureError] if transaction is already signed.
       # @raise [Signature::SignatureError] if sender address does not match signing key.
       def sign(key)
-        if Tx.is_signed? self
+        if Tx.signed? self
           raise Signature::SignatureError, "Transaction is already signed!"
         end
 
@@ -230,7 +228,7 @@ module Eth
       # @return [String] a raw, RLP-encoded legacy transaction.
       # @raise [Signature::SignatureError] if the transaction is not yet signed.
       def encoded
-        unless Tx.is_signed? self
+        unless Tx.signed? self
           raise Signature::SignatureError, "Transaction is not signed!"
         end
         tx_data = []
